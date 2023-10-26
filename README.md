@@ -30,3 +30,4 @@ In theory it should work with FAT & FAT32, not just FAT16, but I didn't test it 
 ## Special thanks
 https://www.win.tue.nl/~aeb/linux/fs/fat/fat-1.html<br/>
 http://www.c-jump.com/CIS24/Slides/FAT/FAT.html#F01_0050_fat12_fat16_fat32_lay<br/>
+https://stackoverflow.com/<br/>
