@@ -54,7 +54,7 @@ class FAT16Parser:
     def get_number_of_heads(self):
         return self.__get_data_from_bytes(FAT16FieldBytes.NUM_HEADS)
 
-    def get_number_of_heidden_sectors(self):
+    def get_number_of_hidden_sectors(self):
         return self.__get_data_from_bytes(FAT16FieldBytes.NUM_HIDDEN_SECTORS)
 
     def get_root_dir_ranges(self):
@@ -72,16 +72,45 @@ class FAT16Parser:
         reserved = self.get_number_of_reserved_sectors()
         num_fats = self.get_number_of_fats()
         sectors_per_fat = self.get_number_of_sectors_per_fat()
-        start = reserved + num_fats * sectors_per_fat
+        # reserved sectors at the start + fat area
+        # but because the reserved area is 0 based we have to decrease 1
+        # then the next sector (+1) is the first reserved area sector
+        start = reserved - 1 + num_fats * sectors_per_fat + 1
 
         root_dir_entries = self.get_number_of_rootdir_entries()
         bytes_per_sector = self.get_number_of_bytes_per_sector()
         if not bytes_per_sector:
             raise("Invalid data, possible divison by zero!")
-        end = start + int(root_dir_entries * 32 /  bytes_per_sector)
+        end = reserved - 1 + num_fats * sectors_per_fat + int(root_dir_entries * 32 / bytes_per_sector)
         return start, end
 
     def print_data(self):
         print(f"Number of bytes per sector: {self.get_number_of_bytes_per_sector()}")
         print(f"Number of sectors per cluster: {self.get_number_of_sectors_per_cluster()}")
+        print(f"Number of reserved sectors: {self.get_number_of_reserved_sectors()}")
+        print(f"Number of sectors in the filesystem: {self.get_total_fs_sectors()}")
+        print(f"Media descriptor type: {self.get_media_descriptor_type()}")
+        print(f"Number of sectors per track: {self.get_number_of_sectors_per_track()}")
+        print(f"Number of heads: {self.get_number_of_heads()}")
+        print(f"Number of hidden sectors: {self.get_number_of_hidden_sectors()}")
+
+        print("FAT area:")
+        print(f"Number of FATs: {self.get_number_of_fats()}")
+        print(f"Number of sectors per FAT: {self.get_number_of_sectors_per_fat()}")
+        start_fat_area = self.get_number_of_reserved_sectors()
+        start_sector = start_fat_area
+        for fat_num in range(0, self.get_number_of_fats()):
+            print(f"\tFAT{fat_num + 1} sectors: {start_sector} - {start_sector + self.get_number_of_sectors_per_fat() - 1}")
+            start_sector += self.get_number_of_sectors_per_fat()
+
+        print("Root directory data:")
+        print(f"\tNumber of Root directory entries: {self.get_number_of_rootdir_entries()}")
+        print(f"\tSize of a Root directory entry: 32MB")
+        try:
+            start_root_dir, end_root_dir = self.get_root_dir_ranges()
+        except:
+            print("Exiting...")
+            return 0
+        print(f"\tStart sector of root dir (starting from the offset): {start_root_dir}")
+        print(f"\tEnd sector of root dir(starting from the offset): {end_root_dir}")
 
